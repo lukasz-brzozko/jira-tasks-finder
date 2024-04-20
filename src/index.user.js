@@ -16,6 +16,7 @@
 (function () {
   "use strict";
 
+  const FIX_VERSION_PREFIX = "FrontPortal-";
   const MESSAGES = {
     containerFound: "Znaleziono kontener.",
     btnText: "Formatuj czasy",
@@ -27,7 +28,7 @@
       latestVersion: "Najnowsze fix version",
       excludedVersion: "Wyłączone fix version (oddzielane przecinkiem)",
       cancelBtn: "Anuluj",
-      confirmBtn: "Zapisz",
+      confirmBtn: "Otwórz filtr w nowej karcie",
     },
     error: {
       default: "Wystąpił błąd. Spróbuj ponownie później.",
@@ -60,7 +61,7 @@
     toast: "toast",
     toastMessage: "toast-message",
     myModal: "fix-version-tasks-modal",
-    modalOverlay: "modal-overlay",
+    modalOverlay: "fix-version-modal-overlay",
     modalCancelBtn: "modal-cancel-btn",
     modalConfirmBtn: "modal-confirm-btn",
     modalFormWrapper: "modal-form-wrapper",
@@ -97,6 +98,61 @@
   let modalInputExcludedVersion;
   let modalInputErrorWrapperEl;
   let modalInputsEls = [];
+
+  const toggleModal = (force = undefined) => {
+    myModalEl.classList.toggle(STATE.visible, force);
+  };
+
+  const handleModalTransitionEnd = (e) => {
+    // setInputCustomUrl();
+    // setInputCustomWeekOffset();
+
+    // modalInputsEls.forEach((input) => toggleModalFormWrapperFilledState(input));
+
+    myModalEl.removeEventListener("transitionend", handleModalTransitionEnd);
+  };
+
+  const closeModal = () => {
+    toggleModal(false);
+  };
+
+  const copyJiraFilterUrlIntoClipboard = async () => {
+    const { url, lowestVersion, highestVersion } = getJiraFilterUrl();
+    const linkName =
+      lowestVersion !== highestVersion
+        ? `${FIX_VERSION_PREFIX}${lowestVersion}-${FIX_VERSION_PREFIX}${highestVersion}`
+        : `${FIX_VERSION_PREFIX}${lowestVersion}`;
+
+    const clipboardItem = new ClipboardItem({
+      "text/plain": new Blob([url], { type: "text/plain" }),
+      "text/html": new Blob([`<a href="${url}">${linkName}</a>`], {
+        type: "text/html",
+      }),
+    });
+
+    await navigator.clipboard.write([clipboardItem]);
+  };
+
+  const handleConfirmModal = async () => {
+    // const isUrlInputValid = validateInputUrl();
+
+    // if (!isUrlInputValid) return toggleModalError(true);
+
+    // localStorage.setItem(JIRA_WEEK_OFFSET, modalInputOffsetEl.value.trim());
+    // localStorage.setItem(JIRA_CUSTOM_URL, modalInputUrlEl.value.trim());
+
+    // closeModal();
+
+    // window.open(getJiraFilterUrl().url, "_blank");
+    await copyJiraFilterUrlIntoClipboard();
+  };
+
+  const handleCancelModal = () => {
+    myModalEl.addEventListener("transitionend", handleModalTransitionEnd);
+
+    closeModal();
+    // toggleModalError(false);
+  };
 
   const handleInputFocus = (e) => {
     const inputWrapper = e.target.closest(SELECTORS.modalFormWrapper);
@@ -157,7 +213,7 @@
     modal.id = IDS.myModal;
     modal.className = "my-modal active visible";
     modal.innerHTML = `
-      <div class="modal-overlay" id="modal-overlay"></div>
+      <div class="modal-overlay" id="${IDS.modalOverlay}"></div>
       <div class="modal-wrapper">
         <h2 class="modal-title">${MESSAGES.modal.title}</h2>
         <div class="modal-content-container">
@@ -165,7 +221,7 @@
           <div class="modal-form-wrapper filled" id="${IDS.modalFormWrapper}">
             <label class="modal-label">${MESSAGES.modal.label}</label>
             <div class="modal-input-wrapper">
-              <input class="modal-input" id="modal-input-url" value="FrontPortal-" data-prev-value="FrontPortal-">
+              <input class="modal-input" id="modal-input-url" value="${FIX_VERSION_PREFIX}" data-prev-value="${FIX_VERSION_PREFIX}">
             </div>
             <div class="modal-input-error-wrapper" id="${IDS.modalInputErrorWrapper}">
               <p class="modal-input-error">${MESSAGES.error.modal.inputUrl}</p>
@@ -174,7 +230,7 @@
           <div class="modal-form-wrapper filled" id="${IDS.modalFormVersionLatest}">
             <label class="modal-label">${MESSAGES.modal.latestVersion}</label>
             <div class="modal-input-wrapper">
-              <input class="modal-input" id="modal-input-offset" value="FrontPortal-" data-prev-value="FrontPortal-">
+              <input class="modal-input" id="modal-input-offset" value="${FIX_VERSION_PREFIX}" data-prev-value="${FIX_VERSION_PREFIX}">
             </div>
             <div class="modal-input-error-wrapper">
               <p class="modal-input-error"></p>
@@ -235,9 +291,9 @@
 
     // formatterBtn.addEventListener("click", renderContent);
     // settingsBtnEl.addEventListener("click", openModal);
-    // modalOverlayEl.addEventListener("click", handleCancelModal);
-    // modalCancelBtnEl.addEventListener("click", handleCancelModal);
-    // modalConfirmBtnEl.addEventListener("click", handleConfirmModal);
+    modalOverlayEl.addEventListener("click", handleCancelModal);
+    modalCancelBtnEl.addEventListener("click", handleCancelModal);
+    modalConfirmBtnEl.addEventListener("click", handleConfirmModal);
     // modalInputFirstVersion.addEventListener("input", handleInput);
 
     modalInputsEls.forEach((input) => {
@@ -250,36 +306,71 @@
     );
   };
 
-  const init = () => {
-    const lowestVersion = 1.524;
-    const highestVersion = 1.524;
-    const multiplier = 1000;
+  const getJiraFilterUrl = () => {
+    const MULTIPLIER = 1000;
+    const MAX_FIX_VERSIONS_DIFFERENCE = 50;
+
+    const digitRegex = new RegExp(/(\d(\.?))+/);
+    const [lowestVersion] = digitRegex.exec(modalInputFirstVersion.value) ?? [];
+    const [highestVersion] =
+      digitRegex.exec(modalInputLatestVersion.value) ?? [];
+
+    if (!lowestVersion || !highestVersion) return;
 
     const baseUrl = "https://jira.nd0.pl/issues/";
-    const fixVersionPrefix = "FrontPortal-";
     const fixVersionsArray = [];
-    const excludedFixVersions = ["PROD_updating_10.04.2024"];
+    const excludedFixVersions = modalInputExcludedVersion.value
+      .split(",")
+      .filter(Boolean);
 
-    const formatter = new Intl.NumberFormat("de-DE");
+    const numberFormatter = new Intl.NumberFormat("de-DE");
 
-    const minValue = lowestVersion * multiplier;
-    const maxValue = highestVersion * multiplier;
+    const minValue = lowestVersion * MULTIPLIER;
+    const maxValue = highestVersion * MULTIPLIER;
 
-    for (let i = minValue; i <= maxValue; i++) {
-      const formattedIndex = formatter.format(i);
-      fixVersionsArray.push(`${fixVersionPrefix}${formattedIndex}`);
+    console.log({
+      lowestVersion,
+      highestVersion,
+      minValue,
+      maxValue,
+      excludedFixVersions,
+      diff: maxValue - minValue,
+    });
+    const fixVersionsDiff = Math.abs(maxValue - minValue);
+
+    if (fixVersionsDiff > MAX_FIX_VERSIONS_DIFFERENCE) {
+      return console.error(
+        `Too much difference between fix versions. Max difference: ${MAX_FIX_VERSIONS_DIFFERENCE}`
+      );
     }
 
-    const filter = `(fixVersion in (${fixVersionsArray.join(
+    for (let i = minValue; i <= maxValue; i++) {
+      const formattedIndex = numberFormatter.format(i);
+      fixVersionsArray.push(`${FIX_VERSION_PREFIX}${formattedIndex}`);
+    }
+
+    const fixVersionIncludedRule = `fixVersion in (${fixVersionsArray.join(
       ", "
-    )}) OR (text ~ "${fixVersionsArray.join(
-      " OR "
-    )}")) AND fixVersion not in (${excludedFixVersions.join(", ")})`;
+    )})`;
+    const containsTextRule = `(text ~ "${fixVersionsArray.join(" OR ")}")`;
+    const fixVersionExcludedRule = `fixVersion not in (${excludedFixVersions.join(
+      ", "
+    )})`;
 
+    const getExcludedFixVersionRule = () =>
+      excludedFixVersions.length > 0 ? `AND ${fixVersionExcludedRule}` : "";
+
+    const filter = `(${fixVersionIncludedRule} OR ${containsTextRule}) ${getExcludedFixVersionRule()}`;
     const url = `${baseUrl}?jql=${encodeURIComponent(filter)}`;
-    console.log(url);
-    // window.open(url, "_blank");
 
+    return {
+      url,
+      lowestVersion,
+      highestVersion,
+    };
+  };
+
+  const init = () => {
     generateUiElements();
   };
 
