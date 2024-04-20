@@ -123,6 +123,10 @@
     inputWrapper.classList.toggle(STATE.filled, !isInputEmpty);
   };
 
+  const setDotAfterFirstDigit = (target) => {
+    return target.value.replace(/\d{1}/, (match) => `${match}.`);
+  };
+
   const handleInput = (e) => {
     // if (!modalInputErrorWrapperEl.classList.contains(STATE.visible)) return;
     const { target } = e;
@@ -139,17 +143,11 @@
 
     if (isValidFixVersion) return (target.dataset.prevValue = value);
     if (isfixVersionWithoutDot) {
-      const replacedValue = e.target.value.replace(
-        /\d{1}/,
-        (match) => `${match}.`
-      );
-      target.value = replacedValue;
-      e.target.value = replacedValue;
-
-      return;
+      const replacedValue = setDotAfterFirstDigit(target);
+      return (target.value = replacedValue);
     }
 
-    e.target.value = e.target.dataset.prevValue;
+    target.value = target.dataset.prevValue;
     // toggleModalError(false);
   };
 
@@ -241,17 +239,20 @@
     // modalCancelBtnEl.addEventListener("click", handleCancelModal);
     // modalConfirmBtnEl.addEventListener("click", handleConfirmModal);
     // modalInputFirstVersion.addEventListener("input", handleInput);
+
     modalInputsEls.forEach((input) => {
       input.addEventListener("focus", handleInputFocus);
       input.addEventListener("blur", handleInputBlur);
       input.addEventListener("change", handleInputChange);
-      input.addEventListener("input", handleInput);
     });
+    [modalInputFirstVersion, modalInputLatestVersion].forEach((input) =>
+      input.addEventListener("input", handleInput)
+    );
   };
 
   const init = () => {
     const lowestVersion = 1.524;
-    const highestVersion = 1.531;
+    const highestVersion = 1.524;
     const multiplier = 1000;
 
     const baseUrl = "https://jira.nd0.pl/issues/";
