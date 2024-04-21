@@ -231,6 +231,12 @@
     });
   };
 
+  const toggleConfirmBtnsDisabled = (areAllInputsValid) => {
+    modalConfirmBtns.forEach((btn) => {
+      btn.toggleAttribute(STATE.disabled, !areAllInputsValid);
+    });
+  };
+
   const handleInput = (e) => {
     // if (!modalInputErrorWrapperEl.classList.contains(STATE.visible)) return;
     const { target } = e;
@@ -256,9 +262,7 @@
 
     // TODO sprawdzić czy nie lepiej wydzielić poniższą walidację na onChange
     const areAllInputsValid = validateInputsValue();
-    modalConfirmBtns.forEach((btn) => {
-      btn.toggleAttribute("disabled", !areAllInputsValid);
-    });
+    toggleConfirmBtnsDisabled(areAllInputsValid);
 
     // TODO dodać sprawdzanie różnicy wartości pomiędzy fix version (max 50) <- tutaj bądź na onChange
 
