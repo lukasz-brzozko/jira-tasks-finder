@@ -17,6 +17,7 @@
   "use strict";
 
   const FIX_VERSION_PREFIX = "FrontPortal-";
+
   const MESSAGES = {
     containerFound: "Znaleziono kontener.",
     btnText: "Formatuj czasy",
@@ -29,6 +30,7 @@
       excludedVersion: "Wyłączone fix version (oddzielane przecinkiem)",
       cancelBtn: "Anuluj",
       confirmBtn: "Otwórz filtr w nowej karcie",
+      confirmAltBtn: "Skopiuj adres filtru do schowka",
     },
     error: {
       default: "Wystąpił błąd. Spróbuj ponownie później.",
@@ -64,6 +66,7 @@
     modalOverlay: "fix-version-modal-overlay",
     modalCancelBtn: "modal-cancel-btn",
     modalConfirmBtn: "modal-confirm-btn",
+    modalConfirmAltBtn: "modal-confirm-alt-btn",
     modalFormWrapper: "modal-form-wrapper",
     modalFormVersionLatest: "modal-form-version-latest",
     modalFormVersionExcluded: "modal-form-version-excluded",
@@ -92,6 +95,7 @@
   let myModalEl;
   let modalCancelBtnEl;
   let modalConfirmBtnEl;
+  let modalConfirmAltBtnEl;
   let modalFormWrapperEl;
   let modalInputFirstVersion;
   let modalInputLatestVersion;
@@ -112,12 +116,22 @@
     myModalEl.removeEventListener("transitionend", handleModalTransitionEnd);
   };
 
+  const openModal = () => {
+    // setInputCustomUrl();
+    // setInputCustomWeekOffset();
+    // modalInputsEls.forEach((input) => toggleModalFormWrapperFilledState(input));
+    toggleModal(true);
+    modalInputFirstVersion.select();
+  };
+
   const closeModal = () => {
     toggleModal(false);
   };
 
   const copyJiraFilterUrlIntoClipboard = async () => {
-    const { url, lowestVersion, highestVersion } = getJiraFilterUrl();
+    const { url, lowestVersion, highestVersion } = getJiraFilterUrl() ?? {};
+    if (!url) return;
+
     const linkName =
       lowestVersion !== highestVersion
         ? `${FIX_VERSION_PREFIX}${lowestVersion}-${FIX_VERSION_PREFIX}${highestVersion}`
@@ -133,7 +147,7 @@
     await navigator.clipboard.write([clipboardItem]);
   };
 
-  const handleConfirmModal = async () => {
+  const handleConfirmModal = () => {
     // const isUrlInputValid = validateInputUrl();
 
     // if (!isUrlInputValid) return toggleModalError(true);
@@ -142,8 +156,13 @@
     // localStorage.setItem(JIRA_CUSTOM_URL, modalInputUrlEl.value.trim());
 
     // closeModal();
+    const { url } = getJiraFilterUrl() ?? {};
+    if (!url) return;
 
-    // window.open(getJiraFilterUrl().url, "_blank");
+    window.open(url, "_blank");
+  };
+
+  const handleConfirmAltModal = async () => {
     await copyJiraFilterUrlIntoClipboard();
   };
 
@@ -211,7 +230,7 @@
     const modal = document.createElement("div");
 
     modal.id = IDS.myModal;
-    modal.className = "my-modal active visible";
+    modal.className = "my-modal active";
     modal.innerHTML = `
       <div class="modal-overlay" id="${IDS.modalOverlay}"></div>
       <div class="modal-wrapper">
@@ -247,8 +266,9 @@
           </div>
         </div>
         <div class="modal-btn-wrapper">
-          <button class="btn btn--light" id="${IDS.modalCancelBtn}">${MESSAGES.modal.cancelBtn}</button>
-          <button class="btn" id="${IDS.modalConfirmBtn}">${MESSAGES.modal.confirmBtn}</button>
+          <button class="btn btn--light btn--small-text" id="${IDS.modalCancelBtn}">${MESSAGES.modal.cancelBtn}</button>
+          <button class="btn btn--small-text" id="${IDS.modalConfirmAltBtn}" disabled>${MESSAGES.modal.confirmAltBtn}</button>
+          <button class="btn btn--small-text btn--outline" id="${IDS.modalConfirmBtn}" disabled>${MESSAGES.modal.confirmBtn}</button>
         </div>
       </div>`;
 
@@ -282,6 +302,9 @@
     );
     modalCancelBtnEl = myModalEl.querySelector(`#${IDS.modalCancelBtn}`);
     modalConfirmBtnEl = myModalEl.querySelector(`#${IDS.modalConfirmBtn}`);
+    modalConfirmAltBtnEl = myModalEl.querySelector(
+      `#${IDS.modalConfirmAltBtn}`
+    );
     const modalOverlayEl = myModalEl.querySelector(`#${IDS.modalOverlay}`);
     [
       modalInputFirstVersion,
@@ -294,6 +317,7 @@
     modalOverlayEl.addEventListener("click", handleCancelModal);
     modalCancelBtnEl.addEventListener("click", handleCancelModal);
     modalConfirmBtnEl.addEventListener("click", handleConfirmModal);
+    modalConfirmAltBtnEl.addEventListener("click", handleConfirmAltModal);
     // modalInputFirstVersion.addEventListener("input", handleInput);
 
     modalInputsEls.forEach((input) => {
@@ -304,6 +328,8 @@
     [modalInputFirstVersion, modalInputLatestVersion].forEach((input) =>
       input.addEventListener("input", handleInput)
     );
+
+    openModal(); // TODO to remove
   };
 
   const getJiraFilterUrl = () => {
