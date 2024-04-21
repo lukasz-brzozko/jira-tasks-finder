@@ -317,7 +317,7 @@
 
     if (!lowestVersion || !highestVersion) return;
 
-    const baseUrl = "https://jira.nd0.pl/issues/";
+    const filterUrl = new URL("https://jira.nd0.pl/issues/");
     const fixVersionsArray = [];
     const excludedFixVersions = modalInputExcludedVersion.value
       .split(",")
@@ -361,7 +361,9 @@
       excludedFixVersions.length > 0 ? `AND ${fixVersionExcludedRule}` : "";
 
     const filter = `(${fixVersionIncludedRule} OR ${containsTextRule}) ${getExcludedFixVersionRule()}`;
-    const url = `${baseUrl}?jql=${encodeURIComponent(filter)}`;
+
+    filterUrl.searchParams.set("jql", filter.trim());
+    const url = filterUrl.toString();
 
     return {
       url,
