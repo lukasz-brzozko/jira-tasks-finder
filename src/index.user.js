@@ -102,6 +102,12 @@
   let modalInputExcludedVersion;
   let modalInputErrorWrapperEl;
   let modalInputsEls = [];
+  let modalFixVersionInputs = [];
+  let modalConfirmBtns = [];
+
+  const fixVersionRegex = new RegExp(/^FrontPortal-((\d)(\.\d{0,3})?)?$/);
+  const fixVersionWithoutDotRegex = new RegExp(/^FrontPortal-(\d{2,4})/);
+  const fixVersionWithDigit = new RegExp(/^FrontPortal-(\d)(\.\d{0,3})?$/);
 
   const toggleModal = (force = undefined) => {
     myModalEl.classList.toggle(STATE.visible, force);
@@ -202,27 +208,60 @@
     return target.value.replace(/\d{1}/, (match) => `${match}.`);
   };
 
+  const validateFixVersionInputValue = (value) => {
+    const isValidFixVersion = fixVersionRegex.test(value);
+    const isFixVersionWithoutDot = fixVersionWithoutDotRegex.test(value);
+    const isFixVersionWithDigit = fixVersionWithDigit.test(value);
+    const isValid =
+      isValidFixVersion || isFixVersionWithoutDot || isFixVersionWithDigit;
+
+    return {
+      isValid,
+      isValidFixVersion,
+      isFixVersionWithoutDot,
+      isFixVersionWithDigit,
+    };
+  };
+
+  const validateInputsValue = () => {
+    return modalFixVersionInputs.every(({ value }) => {
+      const { isFixVersionWithDigit } = validateFixVersionInputValue(value);
+
+      return isFixVersionWithDigit;
+    });
+  };
+
   const handleInput = (e) => {
     // if (!modalInputErrorWrapperEl.classList.contains(STATE.visible)) return;
     const { target } = e;
     const { value } = target;
-    const fixVersionRegex = new RegExp(/^FrontPortal-((\d)(\.\d{0,3})?)?$/);
-    const fixVersionWithoutDotRegex = new RegExp(/^FrontPortal-(\d{2,4})/);
-    const isValidFixVersion = fixVersionRegex.test(value);
-    const isfixVersionWithoutDot = fixVersionWithoutDotRegex.test(value);
+
+    const { isValidFixVersion, isFixVersionWithoutDot } =
+      validateFixVersionInputValue(value);
+
     console.log({
       value,
       isValidFixVersion,
-      isfixVersionWithoutDot,
+      isFixVersionWithoutDot,
     });
 
-    if (isValidFixVersion) return (target.dataset.prevValue = value);
-    if (isfixVersionWithoutDot) {
+    if (isValidFixVersion) {
+      target.dataset.prevValue = value;
+    } else if (isFixVersionWithoutDot) {
       const replacedValue = setDotAfterFirstDigit(target);
-      return (target.value = replacedValue);
+      target.value = replacedValue;
+    } else {
+      target.value = target.dataset.prevValue;
     }
 
-    target.value = target.dataset.prevValue;
+    // TODO sprawdzić czy nie lepiej wydzielić poniższą walidację na onChange
+    const areAllInputsValid = validateInputsValue();
+    modalConfirmBtns.forEach((btn) => {
+      btn.toggleAttribute("disabled", !areAllInputsValid);
+    });
+
+    // TODO dodać sprawdzanie różnicy wartości pomiędzy fix version (max 50) <- tutaj bądź na onChange
+
     // toggleModalError(false);
   };
 
@@ -311,6 +350,8 @@
       modalInputLatestVersion,
       modalInputExcludedVersion,
     ] = modalInputsEls;
+    modalFixVersionInputs = [modalInputFirstVersion, modalInputLatestVersion];
+    modalConfirmBtns = [modalConfirmBtnEl, modalConfirmAltBtnEl];
 
     // formatterBtn.addEventListener("click", renderContent);
     // settingsBtnEl.addEventListener("click", openModal);
@@ -325,7 +366,7 @@
       input.addEventListener("blur", handleInputBlur);
       input.addEventListener("change", handleInputChange);
     });
-    [modalInputFirstVersion, modalInputLatestVersion].forEach((input) =>
+    modalFixVersionInputs.forEach((input) =>
       input.addEventListener("input", handleInput)
     );
 
@@ -364,10 +405,17 @@
     });
     const fixVersionsDiff = Math.abs(maxValue - minValue);
 
-    if (fixVersionsDiff > MAX_FIX_VERSIONS_DIFFERENCE) {
-      return console.error(
-        `Too much difference between fix versions. Max difference: ${MAX_FIX_VERSIONS_DIFFERENCE}`
-      );
+    switch (true) {
+      case minValue > maxValue:
+        return console.error(
+          `First fix version cannot be greater than the last fix version.`
+        );
+      case fixVersionsDiff > MAX_FIX_VERSIONS_DIFFERENCE:
+        return console.error(
+          `Too much difference between fix versions. Max difference: ${MAX_FIX_VERSIONS_DIFFERENCE}.`
+        );
+      default:
+        break;
     }
 
     for (let i = minValue; i <= maxValue; i++) {
