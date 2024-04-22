@@ -39,8 +39,7 @@
       wrongUrl: "Wystąpił błąd. Sprawdź poprawność podanego adresu API URL.",
       containerNotFound: "Nie znaleziono kontenera. Skrypt został wstrzymany.",
       modal: {
-        inputUrl:
-          "Podano nieprawidłowy URL. Adres powinien być zgodny ze schematem: https://jira.nd0.pl/rest/timesheet-gadget/1.0/timesheet.json?{parametry}={trzynaście cyfr}",
+        inputUrl: `Najstarsze fix version nie może być większe niż najnowsze fix version.<br>Maksymalna dopuszczalna różnica wersji: ${MAX_FIX_VERSIONS_DIFFERENCE}.`,
       },
     },
   };
@@ -264,6 +263,16 @@
     const areAllInputsValid = validateInputsValue();
 
     toggleConfirmBtnsDisabled(areAllInputsValid);
+    toggleModalError(!areAllInputsValid);
+  };
+
+  const toggleModalError = (force) => {
+    modalInputErrorWrapperEl.classList.toggle(STATE.visible, force);
+    // modalConfirmBtnEl.toggleAttribute(STATE.disabled, force);
+  };
+
+  const handleChange = () => {
+    validateForm();
   };
 
   const handleInput = (e) => {
@@ -289,8 +298,6 @@
       target.value = target.dataset.prevValue;
     }
 
-    validateForm();
-
     // TODO dodać sprawdzanie różnicy wartości pomiędzy fix version (max 50) <- tutaj bądź na onChange
 
     // toggleModalError(false);
@@ -312,14 +319,14 @@
             <div class="modal-input-wrapper">
               <input class="modal-input" id="modal-input-url" value="${FIX_VERSION_PREFIX}" data-prev-value="${FIX_VERSION_PREFIX}">
             </div>
-            <div class="modal-input-error-wrapper" id="${IDS.modalInputErrorWrapper}">
-              <p class="modal-input-error">${MESSAGES.error.modal.inputUrl}</p>
-            </div>
           </div>
           <div class="modal-form-wrapper filled" id="${IDS.modalFormVersionLatest}">
             <label class="modal-label">${MESSAGES.modal.latestVersion}</label>
             <div class="modal-input-wrapper">
               <input class="modal-input" id="modal-input-offset" value="${FIX_VERSION_PREFIX}" data-prev-value="${FIX_VERSION_PREFIX}">
+            </div>
+            <div class="modal-input-error-wrapper" id="${IDS.modalInputErrorWrapper}">
+              <p class="modal-input-error">${MESSAGES.error.modal.inputUrl}</p>
             </div>
             <div class="modal-input-error-wrapper">
               <p class="modal-input-error"></p>
@@ -399,6 +406,7 @@
     });
     modalFixVersionInputs.forEach((input) => {
       input.addEventListener("input", handleInput);
+      input.addEventListener("change", handleChange);
     });
 
     openModal(); // TODO to remove
