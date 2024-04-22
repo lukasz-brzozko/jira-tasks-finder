@@ -17,6 +17,8 @@
   "use strict";
 
   const FIX_VERSION_PREFIX = "FrontPortal-";
+  const MULTIPLIER = 1000;
+  const MAX_FIX_VERSIONS_DIFFERENCE = 50;
 
   const MESSAGES = {
     containerFound: "Znaleziono kontener.",
@@ -224,17 +226,44 @@
   };
 
   const validateInputsValue = () => {
-    return modalFixVersionInputs.every(({ value }) => {
+    const areValidFixVersions = modalFixVersionInputs.every(({ value }) => {
       const { isFixVersionWithDigit } = validateFixVersionInputValue(value);
 
       return isFixVersionWithDigit;
     });
+
+    const areFixVersionsValuesValid = validateDiffBetweenVersions();
+
+    return areValidFixVersions && areFixVersionsValuesValid;
   };
 
   const toggleConfirmBtnsDisabled = (areAllInputsValid) => {
     modalConfirmBtns.forEach((btn) => {
       btn.toggleAttribute(STATE.disabled, !areAllInputsValid);
     });
+  };
+
+  const validateDiffBetweenVersions = () => {
+    const [lowestVersion] = getDigitFromString(modalInputFirstVersion.value);
+    const [highestVersion] = getDigitFromString(modalInputLatestVersion.value);
+
+    if (!lowestVersion || !highestVersion) return false;
+
+    const minValue = parseDigitString(lowestVersion);
+    const maxValue = parseDigitString(highestVersion);
+
+    const fixVersionsDiff = Math.abs(maxValue - minValue);
+
+    if (minValue > maxValue) return false;
+    if (fixVersionsDiff > MAX_FIX_VERSIONS_DIFFERENCE) return false;
+
+    return true;
+  };
+
+  const validateForm = () => {
+    const areAllInputsValid = validateInputsValue();
+
+    toggleConfirmBtnsDisabled(areAllInputsValid);
   };
 
   const handleInput = (e) => {
@@ -260,9 +289,7 @@
       target.value = target.dataset.prevValue;
     }
 
-    // TODO sprawdzić czy nie lepiej wydzielić poniższą walidację na onChange
-    const areAllInputsValid = validateInputsValue();
-    toggleConfirmBtnsDisabled(areAllInputsValid);
+    validateForm();
 
     // TODO dodać sprawdzanie różnicy wartości pomiędzy fix version (max 50) <- tutaj bądź na onChange
 
@@ -370,21 +397,24 @@
       input.addEventListener("blur", handleInputBlur);
       input.addEventListener("change", handleInputChange);
     });
-    modalFixVersionInputs.forEach((input) =>
-      input.addEventListener("input", handleInput)
-    );
+    modalFixVersionInputs.forEach((input) => {
+      input.addEventListener("input", handleInput);
+    });
 
     openModal(); // TODO to remove
   };
 
-  const getJiraFilterUrl = () => {
-    const MULTIPLIER = 1000;
-    const MAX_FIX_VERSIONS_DIFFERENCE = 50;
-
+  const getDigitFromString = (string) => {
     const digitRegex = new RegExp(/(\d(\.?))+/);
-    const [lowestVersion] = digitRegex.exec(modalInputFirstVersion.value) ?? [];
-    const [highestVersion] =
-      digitRegex.exec(modalInputLatestVersion.value) ?? [];
+
+    return digitRegex.exec(string) ?? [];
+  };
+
+  const parseDigitString = (digitString) => digitString * MULTIPLIER;
+
+  const getJiraFilterUrl = () => {
+    const [lowestVersion] = getDigitFromString(modalInputFirstVersion.value);
+    const [highestVersion] = getDigitFromString(modalInputLatestVersion.value);
 
     if (!lowestVersion || !highestVersion) return;
 
@@ -396,8 +426,8 @@
 
     const numberFormatter = new Intl.NumberFormat("de-DE");
 
-    const minValue = lowestVersion * MULTIPLIER;
-    const maxValue = highestVersion * MULTIPLIER;
+    const minValue = parseDigitString(lowestVersion);
+    const maxValue = parseDigitString(highestVersion);
 
     console.log({
       lowestVersion,
@@ -430,7 +460,9 @@
     const fixVersionIncludedRule = `fixVersion in (${fixVersionsArray.join(
       ", "
     )})`;
-    const containsTextRule = `(text ~ "${fixVersionsArray.join(" OR ")}")`;
+    const containsCommentRule = `(comment ~ "${fixVersionsArray.join(
+      " OR "
+    )}")`;
     const fixVersionExcludedRule = `fixVersion not in (${excludedFixVersions.join(
       ", "
     )})`;
@@ -438,7 +470,7 @@
     const getExcludedFixVersionRule = () =>
       excludedFixVersions.length > 0 ? `AND ${fixVersionExcludedRule}` : "";
 
-    const filter = `(${fixVersionIncludedRule} OR ${containsTextRule}) ${getExcludedFixVersionRule()}`;
+    const filter = `(${fixVersionIncludedRule} OR ${containsCommentRule}) ${getExcludedFixVersionRule()}`;
 
     filterUrl.searchParams.set("jql", filter.trim());
     const url = filterUrl.toString();
