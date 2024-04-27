@@ -474,11 +474,12 @@
     const fixVersionExcludedRule = `fixVersion not in (${excludedFixVersions.join(
       ", "
     )})`;
+    const orderFilter = `ORDER BY project ASC`;
 
     const getExcludedFixVersionRule = () =>
-      excludedFixVersions.length > 0 ? `AND ${fixVersionExcludedRule}` : "";
+      excludedFixVersions.length > 0 ? ` AND ${fixVersionExcludedRule}` : "";
 
-    const filter = `(${fixVersionIncludedRule} OR ${containsCommentRule}) ${getExcludedFixVersionRule()}`;
+    const filter = `((${fixVersionIncludedRule} OR ${containsCommentRule})${getExcludedFixVersionRule()}) ${orderFilter}`;
 
     filterUrl.searchParams.set("jql", filter.trim());
     const url = filterUrl.toString();
