@@ -281,6 +281,11 @@
     validateForm();
   };
 
+  const setTargetValue = (target, value) => {
+    target.value = value;
+    target.dataset.prevValue = value;
+  };
+
   const handleInput = (e) => {
     // if (!modalInputErrorWrapperEl.classList.contains(STATE.visible)) return;
     const { target } = e;
@@ -298,10 +303,9 @@
     if (isValidFixVersion) {
       target.dataset.prevValue = value;
     } else if (isFixVersionWithoutDot) {
-      const replacedValue = setDotAfterFirstDigit(target);
-      target.value = replacedValue;
+      setTargetValue(target, setDotAfterFirstDigit(target));
     } else if (isDigit) {
-      target.value = `${FIX_VERSION_PREFIX}${value}`;
+      setTargetValue(target, `${FIX_VERSION_PREFIX}${value}`);
     } else {
       target.value = target.dataset.prevValue;
     }
