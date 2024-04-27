@@ -108,7 +108,8 @@
 
   const fixVersionRegex = new RegExp(/^FrontPortal-((\d)(\.\d{0,3})?)?$/);
   const fixVersionWithoutDotRegex = new RegExp(/^FrontPortal-(\d{2,4})/);
-  const fixVersionWithDigit = new RegExp(/^FrontPortal-(\d)(\.\d{0,3})?$/);
+  const fixVersionWithDigitRegex = new RegExp(/^FrontPortal-(\d)(\.\d{0,3})?$/);
+  const digitRegex = new RegExp(/^\d$/g);
 
   const toggleModal = (force = undefined) => {
     myModalEl.classList.toggle(STATE.visible, force);
@@ -212,15 +213,20 @@
   const validateFixVersionInputValue = (value) => {
     const isValidFixVersion = fixVersionRegex.test(value);
     const isFixVersionWithoutDot = fixVersionWithoutDotRegex.test(value);
-    const isFixVersionWithDigit = fixVersionWithDigit.test(value);
+    const isFixVersionWithDigit = fixVersionWithDigitRegex.test(value);
+    const isDigit = digitRegex.test(value);
     const isValid =
-      isValidFixVersion || isFixVersionWithoutDot || isFixVersionWithDigit;
+      isValidFixVersion ||
+      isFixVersionWithoutDot ||
+      isFixVersionWithDigit ||
+      isDigit;
 
     return {
       isValid,
       isValidFixVersion,
       isFixVersionWithoutDot,
       isFixVersionWithDigit,
+      isDigit,
     };
   };
 
@@ -280,7 +286,7 @@
     const { target } = e;
     const { value } = target;
 
-    const { isValidFixVersion, isFixVersionWithoutDot } =
+    const { isValidFixVersion, isFixVersionWithoutDot, isDigit } =
       validateFixVersionInputValue(value);
 
     console.log({
@@ -294,6 +300,8 @@
     } else if (isFixVersionWithoutDot) {
       const replacedValue = setDotAfterFirstDigit(target);
       target.value = replacedValue;
+    } else if (isDigit) {
+      target.value = `${FIX_VERSION_PREFIX}${value}`;
     } else {
       target.value = target.dataset.prevValue;
     }
