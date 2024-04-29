@@ -86,6 +86,7 @@
     disabled: "disabled",
   };
 
+  let showFormError = false;
   let controller;
   let formatterBtnEl;
   let layoutEl;
@@ -277,7 +278,7 @@
     const areAllInputsValid = validateInputsValue();
 
     toggleConfirmBtnsDisabled(areAllInputsValid);
-    toggleModalError(!areAllInputsValid);
+    showFormError = !areAllInputsValid;
   };
 
   const toggleModalError = (force) => {
@@ -286,7 +287,7 @@
   };
 
   const handleChange = () => {
-    validateForm();
+    toggleModalError(showFormError);
   };
 
   const setTargetValue = (target, value) => {
@@ -318,9 +319,8 @@
       target.value = target.dataset.prevValue;
     }
 
-    // TODO dodać sprawdzanie różnicy wartości pomiędzy fix version (max 50) <- tutaj bądź na onChange
-
-    // toggleModalError(false);
+    validateForm();
+    if (!showFormError) toggleModalError(showFormError);
   };
 
   const generateModal = () => {
