@@ -112,6 +112,7 @@
   const digitRegex = new RegExp(/^\d$/g);
 
   const toggleModal = (force = undefined) => {
+    myModalEl.removeAttribute("style");
     myModalEl.classList.toggle(STATE.visible, force);
   };
 
@@ -320,6 +321,7 @@
 
     modal.id = IDS.myModal;
     modal.className = "my-modal active";
+    modal.style = "opacity:0; pointer-events:none;";
     modal.innerHTML = `
       <div class="modal-overlay" id="${IDS.modalOverlay}"></div>
       <div class="modal-wrapper">
@@ -364,6 +366,22 @@
     return modal;
   };
 
+  const generateBtn = () => {
+    const btnContainer = document.querySelector(".aui-header-secondary");
+
+    if (!btnContainer) return;
+
+    const btnEl = document.createElement("button");
+    btnEl.className = "copy-to-clipboard-btn secondary";
+    btnEl.title = "Find tasks by fix version";
+    btnEl.innerHTML = `
+        <span class="copy-icon js-copy-icon aui-icon aui-icon-small aui-iconfont-search" role="img" aria-label="Insert meaningful text here for accessibility"></span>
+        <span class="copy-icon copy-icon--success js-copy-success invisible aui-icon aui-icon-small aui-iconfont-check" role="img" aria-label="Insert meaningful text here for accessibility"></span>
+      `;
+    btnEl.addEventListener("click", openModal);
+
+    btnContainer.appendChild(btnEl);
+  };
   const generateUiElements = () => {
     const fragment = new DocumentFragment();
 
@@ -421,7 +439,7 @@
       input.addEventListener("change", handleChange);
     });
 
-    openModal(); // TODO to remove
+    generateBtn();
   };
 
   const getDigitFromString = (string) => {
