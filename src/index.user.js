@@ -111,8 +111,15 @@
   const fixVersionWithDigitRegex = new RegExp(/^FrontPortal-(\d)(\.\d{0,3})?$/);
   const digitRegex = new RegExp(/^\d$/g);
 
+  const linkStyles = async () => {
+    const myCss = GM_getResourceText("styles");
+    const styleTag = document.createElement("style");
+    styleTag.textContent = myCss;
+
+    document.body.prepend(styleTag);
+  };
+
   const toggleModal = (force = undefined) => {
-    myModalEl.removeAttribute("style");
     myModalEl.classList.toggle(STATE.visible, force);
   };
 
@@ -321,7 +328,6 @@
 
     modal.id = IDS.myModal;
     modal.className = "my-modal active";
-    modal.style = "opacity:0; pointer-events:none;";
     modal.innerHTML = `
       <div class="modal-overlay" id="${IDS.modalOverlay}"></div>
       <div class="modal-wrapper">
@@ -522,6 +528,7 @@
   };
 
   const init = () => {
+    linkStyles();
     generateUiElements();
   };
 
