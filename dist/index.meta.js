@@ -1,12 +1,14 @@
 // ==UserScript==
-// @name         Userscript starter
-// @namespace    https://github.com/lukasz-brzozko/userscript-starter
-// @version      2024-02-21
-// @description  Creates a new userscript
+// @name         Jira Tasks Finder
+// @namespace    https://github.com/lukasz-brzozko/jira-tasks-finder
+// @version      2024-04-30
+// @description  Find Jira tasks by Fix version
 // @author       Łukasz Brzózko
-// @match        https://github.com/
-// @icon         https://github.githubassets.com/favicons/favicon.png
-// @updateURL    https://raw.githubusercontent.com/lukasz-brzozko/userscript-starter/main/dist/index.meta.js
-// @downloadURL  https://raw.githubusercontent.com/lukasz-brzozko/userscript-starter/main/dist/index.user.js
-// @grant        none
+// @match        https://jira.nd0.pl/*
+// @exclude      https://jira.nd0.pl/plugins/servlet/*
+// @resource styles    https://raw.githubusercontent.com/lukasz-brzozko/jira-timesheet-formatter/main/styles.css
+// @icon         https://jira.nd0.pl/s/a3v501/940003/1dlckms/_/images/fav-jsw.png
+// @updateURL    https://raw.githubusercontent.com/lukasz-brzozko/jira-tasks-finder/main/timesheet.meta.js
+// @downloadURL  https://raw.githubusercontent.com/lukasz-brzozko/jira-tasks-finder/main/timesheet.user.js
+// @grant        GM_getResourceText
 // ==/UserScript==
