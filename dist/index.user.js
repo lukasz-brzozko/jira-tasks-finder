@@ -17,6 +17,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 // @match        https://jira.nd0.pl/*
 // @exclude      https://jira.nd0.pl/plugins/servlet/*
 // @resource styles    https://raw.githubusercontent.com/lukasz-brzozko/jira-timesheet-formatter/main/styles.css
+// @resource toastStyles    https://raw.githubusercontent.com/lukasz-brzozko/jira-copy-fix-version/main/dist/styles.css
 // @icon         https://jira.nd0.pl/s/a3v501/940003/1dlckms/_/images/fav-jsw.png
 // @updateURL    https://raw.githubusercontent.com/lukasz-brzozko/jira-tasks-finder/main/timesheet.meta.js
 // @downloadURL  https://raw.githubusercontent.com/lukasz-brzozko/jira-tasks-finder/main/timesheet.user.js
