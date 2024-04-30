@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Jira Tasks Finder
 // @namespace    https://github.com/lukasz-brzozko/jira-tasks-finder
-// @version      2024-04-19
+// @version      2024-04-30
 // @description  Find Jira tasks by Fix version
 // @author       Łukasz Brzózko
 // @match        https://jira.nd0.pl/*

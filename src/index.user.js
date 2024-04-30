@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         Jira Tasks Finder
 // @namespace    https://github.com/lukasz-brzozko/jira-tasks-finder
-// @version      2024-04-19
+// @version      2024-04-30
 // @description  Find Jira tasks by Fix version
 // @author       Łukasz Brzózko
 // @match        https://jira.nd0.pl/*
 // @exclude      https://jira.nd0.pl/plugins/servlet/*
 // @resource styles    https://raw.githubusercontent.com/lukasz-brzozko/jira-timesheet-formatter/main/styles.css
+// @resource toastStyles    https://raw.githubusercontent.com/lukasz-brzozko/jira-copy-fix-version/main/dist/styles.css
 // @icon         https://jira.nd0.pl/s/a3v501/940003/1dlckms/_/images/fav-jsw.png
 // @updateURL    https://raw.githubusercontent.com/lukasz-brzozko/jira-tasks-finder/main/timesheet.meta.js
 // @downloadURL  https://raw.githubusercontent.com/lukasz-brzozko/jira-tasks-finder/main/timesheet.user.js
@@ -88,18 +89,10 @@
   };
 
   let showFormError = false;
-  let controller;
-  let formatterBtnEl;
-  let layoutEl;
-  let toastEl;
-  let toastMessageEl;
-  let dashboardContentEl;
-  let settingsBtnEl;
   let myModalEl;
   let modalCancelBtnEl;
   let modalConfirmBtnEl;
   let modalConfirmAltBtnEl;
-  let modalFormWrapperEl;
   let modalInputFirstVersion;
   let modalInputLatestVersion;
   let modalInputExcludedVersion;
@@ -115,8 +108,9 @@
 
   const linkStyles = async () => {
     const myCss = GM_getResourceText("styles");
+    const toastCss = GM_getResourceText("toastStyles");
     const styleTag = document.createElement("style");
-    styleTag.textContent = myCss;
+    styleTag.textContent = `${myCss} ${toastCss}`;
 
     document.body.prepend(styleTag);
   };
@@ -125,19 +119,11 @@
     myModalEl.classList.toggle(STATE.visible, force);
   };
 
-  const handleModalTransitionEnd = (e) => {
-    // setInputCustomUrl();
-    // setInputCustomWeekOffset();
-
-    // modalInputsEls.forEach((input) => toggleModalFormWrapperFilledState(input));
-
+  const handleModalTransitionEnd = () => {
     myModalEl.removeEventListener("transitionend", handleModalTransitionEnd);
   };
 
   const openModal = () => {
-    // setInputCustomUrl();
-    // setInputCustomWeekOffset();
-    // modalInputsEls.forEach((input) => toggleModalFormWrapperFilledState(input));
     toggleModal(true);
     modalInputFirstVersion.select();
   };
@@ -166,14 +152,6 @@
   };
 
   const handleConfirmModal = () => {
-    // const isUrlInputValid = validateInputUrl();
-
-    // if (!isUrlInputValid) return toggleModalError(true);
-
-    // localStorage.setItem(JIRA_WEEK_OFFSET, modalInputOffsetEl.value.trim());
-    // localStorage.setItem(JIRA_CUSTOM_URL, modalInputUrlEl.value.trim());
-
-    // closeModal();
     const { url } = getJiraFilterUrl() ?? {};
     if (!url) return;
 
@@ -189,7 +167,6 @@
     myModalEl.addEventListener("transitionend", handleModalTransitionEnd);
 
     closeModal();
-    // toggleModalError(false);
   };
 
   const handleInputFocus = (e) => {
@@ -285,7 +262,6 @@
 
   const toggleModalError = (force) => {
     modalInputErrorWrapperEl.classList.toggle(STATE.visible, force);
-    // modalConfirmBtnEl.toggleAttribute(STATE.disabled, force);
   };
 
   const handleChange = () => {
@@ -298,7 +274,6 @@
   };
 
   const handleInput = (e) => {
-    // if (!modalInputErrorWrapperEl.classList.contains(STATE.visible)) return;
     const { target } = e;
     const { value } = target;
 
@@ -401,26 +376,13 @@
 
   const generateUiElements = () => {
     const fragment = new DocumentFragment();
-
-    // const btnsWrapper = generateBtnsWrapper();
-    // const settingsBtn = generateSettingsBtn();
-
-    // const toastWrapper = generateToast();
     const modal = generateModal();
 
-    // btnsWrapper.appendChild(settingsBtn);
-    // fragment.appendChild(btnsWrapper);
-    // fragment.appendChild(toastWrapper);
     fragment.appendChild(modal);
     document.body.appendChild(fragment);
 
-    formatterBtnEl = document.getElementById(IDS.formatterBtn);
-    settingsBtnEl = document.getElementById(IDS.settingsBtn);
-    toastEl = document.getElementById(IDS.toast);
     myModalEl = document.getElementById(IDS.myModal);
-    // toastMessageEl = toastEl.querySelector(`#${IDS.toastMessage}`);
     modalInputsEls = myModalEl.querySelectorAll(SELECTORS.modalInput);
-    modalFormWrapperEl = myModalEl.querySelector(`#${IDS.modalFormWrapper}`);
     modalInputErrorWrapperEl = myModalEl.querySelector(
       `#${IDS.modalInputErrorWrapper}`
     );
@@ -438,13 +400,10 @@
     modalFixVersionInputs = [modalInputFirstVersion, modalInputLatestVersion];
     modalConfirmBtns = [modalConfirmBtnEl, modalConfirmAltBtnEl];
 
-    // formatterBtn.addEventListener("click", renderContent);
-    // settingsBtnEl.addEventListener("click", openModal);
     modalOverlayEl.addEventListener("click", handleCancelModal);
     modalCancelBtnEl.addEventListener("click", handleCancelModal);
     modalConfirmBtnEl.addEventListener("click", handleConfirmModal);
     modalConfirmAltBtnEl.addEventListener("click", handleConfirmAltModal);
-    // modalInputFirstVersion.addEventListener("input", handleInput);
 
     modalInputsEls.forEach((input) => {
       input.addEventListener("focus", handleInputFocus);
