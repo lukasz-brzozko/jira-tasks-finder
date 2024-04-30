@@ -61,7 +61,7 @@
     formatterBtn: "formatter-btn",
     settingsBtn: "settings-btn",
     myGadget: "my-gadget",
-    toast: "toast",
+    toast: "my-toast",
     toastMessage: "toast-message",
     myModal: "fix-version-tasks-modal",
     modalOverlay: "fix-version-modal-overlay",
@@ -84,6 +84,7 @@
     focus: "focus",
     filled: "filled",
     disabled: "disabled",
+    active: "active",
   };
 
   let showFormError = false;
@@ -181,6 +182,7 @@
 
   const handleConfirmAltModal = async () => {
     await copyJiraFilterUrlIntoClipboard();
+    showMessage("Copied to clipboard");
   };
 
   const handleCancelModal = () => {
@@ -388,6 +390,15 @@
 
     btnContainer.appendChild(btnEl);
   };
+
+  const generateToast = () => {
+    const divEl = document.createElement("div");
+    divEl.id = IDS.toast;
+    divEl.className = "my-message-copied-info";
+    divEl.style.zIndex = "102";
+    document.body.appendChild(divEl);
+  };
+
   const generateUiElements = () => {
     const fragment = new DocumentFragment();
 
@@ -446,6 +457,16 @@
     });
 
     generateBtn();
+    generateToast();
+  };
+
+  const showMessage = (text) => {
+    const toast = document.getElementById(IDS.toast);
+
+    toast.textContent = text;
+    toast.classList.remove(STATE.active);
+    void toast.offsetWidth; // force reflow
+    toast.classList.add(STATE.active);
   };
 
   const getDigitFromString = (string) => {
