@@ -11,7 +11,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 // ==UserScript==
 // @name         Jira Tasks Finder
 // @namespace    https://github.com/lukasz-brzozko/jira-tasks-finder
-// @version      2024-04-30
+// @version      2024-06-13
 // @description  Find Jira tasks by Fix version
 // @author       Łukasz Brzózko
 // @match        https://jira.nd0.pl/*
@@ -23,6 +23,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 // @downloadURL  https://raw.githubusercontent.com/lukasz-brzozko/jira-tasks-finder/main/dist/index.user.js
 // @grant        GM_getResourceText
 // ==/UserScript==
+
 (function () {
   "use strict";
 
@@ -425,7 +426,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     var fixVersionIncludedRule = "fixVersion in (".concat(fixVersionsArray.join(", "), ")");
     var containsCommentRule = "(comment ~ \"".concat(fixVersionsArray.join(" OR "), "\")");
     var fixVersionExcludedRule = "fixVersion not in (".concat(excludedFixVersions.join(", "), ")");
-    var orderFilter = "ORDER BY project ASC";
+    var orderFilter = "ORDER BY project ASC, type ASC";
     var getExcludedFixVersionRule = function getExcludedFixVersionRule() {
       return excludedFixVersions.length > 0 ? " AND ".concat(fixVersionExcludedRule) : "";
     };
